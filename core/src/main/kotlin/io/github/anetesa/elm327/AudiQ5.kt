@@ -18,7 +18,7 @@ object AudiQ5 {
     /**
      * @param vin the car's VIN; the real one stays out of the repository (local.properties), this one is made up.
      */
-    fun coldStart(vin: String = "WAUZZZ8R0FA000000", misfires: Misfires = Misfires.AFTER_AVS, seed: Int = 15): Vehicle {
+    fun coldStart(vin: String = "WAUZZZ8R0FA000000", misfires: Misfires = Misfires.ADAPTED, seed: Int = 15): Vehicle {
         val rnd = Random(seed)
         fun heating(t: Double) = t < CAT_HEATING_S
         fun rpm(t: Double) = if (heating(t)) 1296.0 + 30 * sin(t) else 760.0 + 15 * sin(t / 2)
@@ -87,11 +87,14 @@ object AudiQ5 {
 
     /** Misfires of cylinders 1 and 2 in one cold start: counts, seconds until they stop, averages. */
     enum class Misfires(val cylinder1: Int, val cylinder2: Int, val untilS: Double, val average1: Int, val average2: Int) {
-        /** Before the AVS actuator was replaced: 64 and 327 until the catalyst heating ends at about 40 s (the averages of the scan are kept). */
-        BEFORE_AVS(64, 327, CAT_HEATING_S, 4, 6),
+        /**
+         * The first cold start after clearing codes, when the fuel trims are learned anew: 64 and 327 until the
+         * catalyst heating ends at about 40 s (the averages of the scan are kept).
+         */
+        AFTER_CLEAR(64, 327, CAT_HEATING_S, 4, 6),
 
-        /** After it: 22 and 23 in the first 7 seconds. */
-        AFTER_AVS(22, 23, 7.0, 4, 6),
+        /** A few starts later, with the trims learned again: 22 and 23 in the first 7 seconds. */
+        ADAPTED(22, 23, 7.0, 4, 6),
     }
 
     /**
