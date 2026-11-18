@@ -50,6 +50,8 @@ class Vehicle(
      * answered only to UDS 19 02 sent to the engine unit (P11A6 00 on an Audi).
      */
     val manufacturerCodes: List<Pair<Int, Int>> = emptyList(),
+    /** How many "response pending" (7F 19 78) the engine unit sends before its UDS 19 02 answer. */
+    val udsResponsePending: Int = 0,
 ) {
     var stored: List<Int> = stored
         private set

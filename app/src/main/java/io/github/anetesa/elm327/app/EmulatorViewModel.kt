@@ -31,6 +31,7 @@ enum class CarChoice(val title: String, val create: () -> Vehicle) {
     UDS("OBD on UDS (SAE J1979-2)", { DemoVehicles.petrol(Bus.CAN, ObdStandard.J1979_2) }),
     AUDI_Q5("Audi Q5 2.0 TFSI, cold start misfires", { AudiQ5.coldStart(carVin()) }),
     AUDI_Q5_AFTER_CLEAR("Audi Q5 2.0 TFSI, first start after clearing codes", { AudiQ5.coldStart(carVin(), AudiQ5.Misfires.AFTER_CLEAR) }),
+    AUDI_Q5_BUSY_UNIT("Audi Q5 2.0 TFSI, engine unit answers \"wait\" first", { AudiQ5.coldStart(carVin(), udsResponsePending = 2) }),
 }
 
 /** The real VIN from local.properties when there is one. */

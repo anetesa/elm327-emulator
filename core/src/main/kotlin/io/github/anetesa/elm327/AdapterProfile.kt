@@ -28,7 +28,12 @@ data class AdapterProfile(
     val description: String? = "OBDII to RS232 Interpreter",
     /** The Bluetooth name the real adapter shows in a scan; the phone can be renamed to it. */
     val bluetoothName: String = "OBDII Emulator",
+    /** How the adapter treats ATSH: the request address that manufacturer services need. */
+    val headers: HeaderSupport = HeaderSupport.SUPPORTED,
 )
+
+/** ATSH on clones: most follow it, some answer OK and keep asking every unit, some do not know it at all. */
+enum class HeaderSupport { SUPPORTED, IGNORED, REJECTED }
 
 object AdapterProfiles {
     val Genuine = AdapterProfile("genuine", "Genuine ELM327 v2.2", "ELM327 v2.2")
@@ -72,5 +77,11 @@ object AdapterProfiles {
         bluetoothName = "Viecar",
     )
 
-    val all = listOf(Genuine, CloneV15, FakeV21, Stn, SlowBle, SmallBuffer, Unstable, Viecar)
+    /** Answers OK to ATSH but keeps sending to 7DF, so the engine unit never hears manufacturer requests. */
+    val IgnoresHeader = AdapterProfile("ignores-sh", "Clone that ignores ATSH", "ELM327 v1.5", headers = HeaderSupport.IGNORED)
+
+    /** Answers "?" to ATSH: a cut-down clone that can only ask every OBD unit at once. */
+    val NoHeader = AdapterProfile("no-sh", "Clone without ATSH", "ELM327 v2.1", headers = HeaderSupport.REJECTED, description = null)
+
+    val all = listOf(Genuine, CloneV15, FakeV21, Stn, SlowBle, SmallBuffer, Unstable, Viecar, IgnoresHeader, NoHeader)
 }

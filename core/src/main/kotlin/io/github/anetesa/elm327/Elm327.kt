@@ -105,9 +105,13 @@ class Elm327(
             arg == "RV" -> Reply.Text(String.format(Locale.ROOT, "%.1fV", VOLTAGE + (commands % 3) * 0.1))
             arg == "DP" -> Reply.Text((if (protocol == "0") "AUTO, " else "") + vehicle.bus.protocolName)
             arg == "DPN" -> Reply.Text((if (protocol == "0") "A" else "") + vehicle.bus.protocolNumber)
-            arg.startsWith("SH") -> {
-                requestHeader = arg.drop(2)
-                OK
+            arg.startsWith("SH") -> when (profile.headers) {
+                HeaderSupport.SUPPORTED -> {
+                    requestHeader = arg.drop(2)
+                    OK
+                }
+                HeaderSupport.IGNORED -> OK
+                HeaderSupport.REJECTED -> Reply.Text("?")
             }
             arg.startsWith("SP") || arg.startsWith("TP") -> {
                 protocol = arg.drop(2).removePrefix("A").ifEmpty { "0" }
@@ -240,8 +244,12 @@ class Elm327(
     }
 
     /** 59 02 availability-mask { code(3) status }*: standard and manufacturer codes, confirmed. */
+    /**
+     * The unit may first answer "response pending" (7F 19 78) while it collects the codes; the ELM327 keeps
+     * listening and prints both messages.
+     */
     private fun manufacturerCodes(): Reply = Reply.Ecu(
-        listOf(
+        List(vehicle.udsResponsePending) { listOf(0x7F, 0x19, 0x78) } + listOf(
             listOf(0x59, 0x02, 0xFF) +
                 vehicle.stored.flatMap { dtc3(it) + STATUS_CONFIRMED_ACTIVE } +
                 vehicle.manufacturerCodes.flatMap { (code, failure) -> word(code) + failure + STATUS_CONFIRMED_ACTIVE },

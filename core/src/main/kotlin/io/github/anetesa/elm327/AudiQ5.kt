@@ -17,8 +17,14 @@ object AudiQ5 {
 
     /**
      * @param vin the car's VIN; the real one stays out of the repository (local.properties), this one is made up.
+     * @param udsResponsePending "response pending" answers before the manufacturer codes (a busy engine unit).
      */
-    fun coldStart(vin: String = "WAUZZZ8R0FA000000", misfires: Misfires = Misfires.ADAPTED, seed: Int = 15): Vehicle {
+    fun coldStart(
+        vin: String = "WAUZZZ8R0FA000000",
+        misfires: Misfires = Misfires.ADAPTED,
+        seed: Int = 15,
+        udsResponsePending: Int = 0,
+    ): Vehicle {
         val rnd = Random(seed)
         fun heating(t: Double) = t < CAT_HEATING_S
         fun rpm(t: Double) = if (heating(t)) 1296.0 + 30 * sin(t) else 760.0 + 15 * sin(t / 2)
@@ -62,6 +68,7 @@ object AudiQ5 {
             permanent = listOf(0x0456, 0x0300, 0x0302),
             // P11A6 00: the AVS cam actuator of cylinder 2, as VCDS read it from the engine unit
             manufacturerCodes = listOf(0x11A6 to 0x00),
+            udsResponsePending = udsResponsePending,
             // Catalyst, EVAP and oxygen sensor monitors not ready after 34 km and 6 warm-ups
             incompleteMonitors = 0x25,
             monitorTests = misfireTests(misfires),

@@ -59,4 +59,33 @@ class AudiQ5Test {
         assertEquals("Viecar", AdapterProfiles.Viecar.bluetoothName)
         assertEquals("ELM327 v1.5", AdapterProfiles.Viecar.banner)
     }
+
+    private fun manufacturerReply(profile: AdapterProfile, car: Vehicle = AudiQ5.coldStart()): Pair<String, String> {
+        val elm = Elm327(profile, car) { 10.0 }
+        listOf("ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0", "0100").forEach(elm::execute)
+        val header = elm.execute("ATSH7E0").replace(Regex("[\\r>]"), "")
+        return header to elm.execute("1902FF").replace(Regex("[\\r>]"), "")
+    }
+
+    @Test
+    fun `a clone that ignores ATSH says OK and the engine unit never hears the request`() {
+        val (header, reply) = manufacturerReply(AdapterProfiles.IgnoresHeader)
+        assertEquals("OK", header)
+        assertEquals(true, reply.contains("NO DATA"), reply)
+    }
+
+    @Test
+    fun `a clone without ATSH answers a question mark`() {
+        val (header, reply) = manufacturerReply(AdapterProfiles.NoHeader)
+        assertEquals("?", header)
+        assertEquals(true, reply.contains("NO DATA"), reply)
+    }
+
+    @Test
+    fun `a busy engine unit first answers response pending, then the codes in several frames`() {
+        val (_, reply) = manufacturerReply(AdapterProfiles.Genuine, AudiQ5.coldStart(udsResponsePending = 2))
+        assertEquals(2, Regex("7F1978").findAll(reply).count(), reply)
+        assertEquals(true, reply.contains("0:5902FF"), reply)
+        assertEquals(true, reply.contains("11A60009"), reply)
+    }
 }
