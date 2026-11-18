@@ -43,6 +43,8 @@ class Vehicle(
     val calibrations: List<Pair<String, Long>> = emptyList(),
     /** In-use performance ratios (Mode 09, InfoType 08): 16-bit counters; clearing codes keeps them. */
     val inUseRatios: List<Int> = emptyList(),
+    /** Byte D of PID 01: the spark monitors not yet complete (same bits as [SPARK_MONITORS]). */
+    private val incompleteMonitors: Int = 0x00,
 ) {
     var stored: List<Int> = stored
         private set
@@ -58,7 +60,7 @@ class Vehicle(
             (if (stored.isNotEmpty()) MIL_ON else 0) or stored.size,
             if (cleared) COMMON_INCOMPLETE else COMMON_COMPLETE,
             SPARK_MONITORS,
-            if (cleared) SPARK_MONITORS else 0x00,
+            if (cleared) SPARK_MONITORS else incompleteMonitors,
         )
         cleared && pid in SINCE_CLEAR_PIDS -> pids[pid]?.invoke(t)?.map { 0 }
         else -> pids[pid]?.invoke(t)

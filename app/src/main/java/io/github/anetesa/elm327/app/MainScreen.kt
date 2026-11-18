@@ -114,7 +114,7 @@ private fun Connection(state: UiState, model: EmulatorViewModel) {
                     "Scanner apps list adapters whose names contain OBD or ELM.",
                 style = MaterialTheme.typography.bodySmall,
             )
-            OutlinedButton(model::renameBluetooth) { Text("Rename Bluetooth to \"OBDII Emulator\"") }
+            OutlinedButton(model::renameBluetooth) { Text("Rename Bluetooth to \"${state.profile.bluetoothName}\"") }
             Text(
                 "Wi‑Fi: turn on this phone's hotspot (or join the same network) and use port ${TcpServer.DEFAULT_PORT} with one of:",
                 style = MaterialTheme.typography.bodySmall,

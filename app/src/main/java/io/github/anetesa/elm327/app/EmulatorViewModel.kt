@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.anetesa.elm327.AdapterProfile
 import io.github.anetesa.elm327.AdapterProfiles
+import io.github.anetesa.elm327.AudiQ5
 import io.github.anetesa.elm327.Bus
 import io.github.anetesa.elm327.DemoVehicles
 import io.github.anetesa.elm327.ElmSession
@@ -28,6 +29,9 @@ enum class CarChoice(val title: String, val create: () -> Vehicle) {
     CAN("Petrol car, CAN (ISO 15765-4)", { DemoVehicles.petrol(Bus.CAN) }),
     K_LINE("Petrol car, K-Line (ISO 9141-2)", { DemoVehicles.petrol(Bus.K_LINE) }),
     UDS("OBD on UDS (SAE J1979-2)", { DemoVehicles.petrol(Bus.CAN, ObdStandard.J1979_2) }),
+    AUDI_Q5("Audi Q5 2.0 TFSI, cold start misfires", {
+        BuildConfig.CAR_VIN.takeIf { it.isNotBlank() }?.let(AudiQ5::coldStart) ?: AudiQ5.coldStart()
+    }),
 }
 
 data class UiState(
@@ -64,7 +68,7 @@ class EmulatorViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun renameBluetooth() {
-        runCatching { bluetooth?.adapter?.setName(EMULATOR_NAME) }
+        runCatching { bluetooth?.adapter?.setName(_state.value.profile.bluetoothName) }
         refresh()
     }
 
@@ -136,6 +140,5 @@ class EmulatorViewModel(application: Application) : AndroidViewModel(application
 
     private companion object {
         const val MAX_LOG = 300
-        const val EMULATOR_NAME = "OBDII Emulator"
     }
 }

@@ -26,6 +26,8 @@ data class AdapterProfile(
     val stnId: String? = null,
     /** Reply to AT@1; null answers "?". */
     val description: String? = "OBDII to RS232 Interpreter",
+    /** The Bluetooth name the real adapter shows in a scan; the phone can be renamed to it. */
+    val bluetoothName: String = "OBDII Emulator",
 )
 
 object AdapterProfiles {
@@ -58,5 +60,17 @@ object AdapterProfiles {
     val SmallBuffer = AdapterProfile("small-buffer", "Clone with a tiny buffer", "ELM327 v1.5", bufferLimitChars = 24)
     val Unstable = AdapterProfile("unstable", "Drops the link after 18 commands", "ELM327 v1.5", dropAfterCommands = 18)
 
-    val all = listOf(Genuine, CloneV15, FakeV21, Stn, SlowBle, SmallBuffer, Unstable)
+    /** Viecar BLE: a v1.5 clone that sends replies in 20-byte notifications, named "Viecar" in a scan. */
+    val Viecar = AdapterProfile(
+        "viecar",
+        "Viecar BLE (ELM327 v1.5)",
+        "ELM327 v1.5",
+        commandDelayMs = 60,
+        chunkSize = 20,
+        chunkDelayMs = 15,
+        rejectedAt = setOf("ATAT1"),
+        bluetoothName = "Viecar",
+    )
+
+    val all = listOf(Genuine, CloneV15, FakeV21, Stn, SlowBle, SmallBuffer, Unstable, Viecar)
 }
