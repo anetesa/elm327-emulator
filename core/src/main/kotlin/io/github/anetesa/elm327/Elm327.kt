@@ -24,6 +24,9 @@ class Elm327(
     private var spaces = true
     private var headers = false
 
+    /** ATSH: where requests go. 7DF asks every OBD unit; 7E0 is the engine unit alone (manufacturer services). */
+    private var requestHeader = FUNCTIONAL_HEADER
+
     /** "0" is automatic search; otherwise the protocol number set with ATSP. */
     private var protocol = "0"
     private var connected = false
@@ -102,6 +105,10 @@ class Elm327(
             arg == "RV" -> Reply.Text(String.format(Locale.ROOT, "%.1fV", VOLTAGE + (commands % 3) * 0.1))
             arg == "DP" -> Reply.Text((if (protocol == "0") "AUTO, " else "") + vehicle.bus.protocolName)
             arg == "DPN" -> Reply.Text((if (protocol == "0") "A" else "") + vehicle.bus.protocolNumber)
+            arg.startsWith("SH") -> {
+                requestHeader = arg.drop(2)
+                OK
+            }
             arg.startsWith("SP") || arg.startsWith("TP") -> {
                 protocol = arg.drop(2).removePrefix("A").ifEmpty { "0" }
                 connected = false
@@ -127,12 +134,15 @@ class Elm327(
         linefeeds = false
         spaces = true
         headers = false
+        requestHeader = FUNCTIONAL_HEADER
         protocol = "0"
         connected = false
     }
 
     private fun obd(cmd: String): Reply {
         val bytes = cmd.chunked(2).map { it.toInt(HEX) }
+        // UDS 19 02 to the engine unit: every code it keeps, manufacturer ones included (as VCDS reads them)
+        if (cmd.startsWith("1902")) return if (requestHeader == ENGINE_HEADER) manufacturerCodes() else NO_DATA
         if (vehicle.standard == ObdStandard.J1979_2) return uds(cmd, bytes)
         val mode = bytes[0]
         val pid = bytes.getOrNull(1)
@@ -229,6 +239,15 @@ class Elm327(
         else -> NO_DATA
     }
 
+    /** 59 02 availability-mask { code(3) status }*: standard and manufacturer codes, confirmed. */
+    private fun manufacturerCodes(): Reply = Reply.Ecu(
+        listOf(
+            listOf(0x59, 0x02, 0xFF) +
+                vehicle.stored.flatMap { dtc3(it) + STATUS_CONFIRMED_ACTIVE } +
+                vehicle.manufacturerCodes.flatMap { (code, failure) -> word(code) + failure + STATUS_CONFIRMED_ACTIVE },
+        ),
+    )
+
     private fun udsLive(requested: List<Int>): Reply {
         val parts = requested.take(if (profile.multiPid) MAX_PIDS else 1)
             .mapNotNull { pid -> vehicle.pidBytes(pid, elapsedSeconds())?.let { listOf(0xF4, pid) + it } }
@@ -288,6 +307,11 @@ class Elm327(
         const val BUFFER_FULL = "BUFFER FULL"
         val CAN_PROTOCOLS = setOf("6", "7", "8", "9")
         const val ECU_CAN_ID = "7E8"
+        const val FUNCTIONAL_HEADER = "7DF"
+        const val ENGINE_HEADER = "7E0"
+
+        /** testFailed + confirmed: the fault is present now. */
+        const val STATUS_CONFIRMED_ACTIVE = 0x09
         val KLINE_HEADER = listOf(0x48, 0x6B, 0x10)
         const val VOLTAGE = 13.9
         const val HEX = 16

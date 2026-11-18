@@ -60,6 +60,8 @@ object AudiQ5 {
             inUseRatios = listOf(3341, 13_582, 4629, 3287, 0, 0, 4684, 3341, 0, 0, 9451, 3341, 0, 0, 379, 410, 3124, 3341, 0, 0),
             stored = listOf(0x0300, 0x0301, 0x0302),
             permanent = listOf(0x0456, 0x0300, 0x0302),
+            // P11A6 00: the AVS cam actuator of cylinder 2, as VCDS read it from the engine unit
+            manufacturerCodes = listOf(0x11A6 to 0x00),
             // Catalyst, EVAP and oxygen sensor monitors not ready after 34 km and 6 warm-ups
             incompleteMonitors = 0x25,
             monitorTests = misfireTests(misfires),

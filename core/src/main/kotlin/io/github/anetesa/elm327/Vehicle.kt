@@ -45,6 +45,11 @@ class Vehicle(
     val inUseRatios: List<Int> = emptyList(),
     /** Byte D of PID 01: the spark monitors not yet complete (same bits as [SPARK_MONITORS]). */
     private val incompleteMonitors: Int = 0x00,
+    /**
+     * Codes the engine unit keeps but does not report in modes 03/07/0A: the code and its failure type,
+     * answered only to UDS 19 02 sent to the engine unit (P11A6 00 on an Audi).
+     */
+    val manufacturerCodes: List<Pair<Int, Int>> = emptyList(),
 ) {
     var stored: List<Int> = stored
         private set

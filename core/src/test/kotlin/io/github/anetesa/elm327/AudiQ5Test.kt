@@ -45,6 +45,16 @@ class AudiQ5Test {
     }
 
     @Test
+    fun `the engine unit gives the manufacturer code to UDS 19 02 sent to it, not to the functional address`() {
+        val elm = Elm327(AdapterProfiles.Genuine, AudiQ5.coldStart()) { 10.0 }
+        listOf("ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0", "0100").forEach(elm::execute)
+        assertEquals(true, elm.execute("1902FF").contains("NO DATA"), "7DF does not get it")
+        elm.execute("ATSH7E0")
+        val reply = elm.execute("1902FF").replace(Regex("[\\r>]"), "")
+        assertEquals(true, reply.contains("11A60009"), reply)
+    }
+
+    @Test
     fun `the Viecar profile is named as the real adapter`() {
         assertEquals("Viecar", AdapterProfiles.Viecar.bluetoothName)
         assertEquals("ELM327 v1.5", AdapterProfiles.Viecar.banner)
