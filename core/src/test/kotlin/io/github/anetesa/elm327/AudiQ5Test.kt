@@ -36,6 +36,15 @@ class AudiQ5Test {
     }
 
     @Test
+    fun `before the AVS repair cylinder 2 misfires 327 times until the catalyst is warm`() {
+        val before = AudiQ5.coldStart(misfires = AudiQ5.Misfires.BEFORE_AVS)
+        fun current(mid: Int, t: Double) = before.monitorBytes(mid, t)!!.chunked(9).first { it[1] == 0x0C }.let { it[3] * 256 + it[4] }
+        assertEquals(327, current(0xA3, 45.0))
+        assertEquals(64, current(0xA2, 45.0))
+        assertEquals(0, current(0xA5, 45.0))
+    }
+
+    @Test
     fun `the Viecar profile is named as the real adapter`() {
         assertEquals("Viecar", AdapterProfiles.Viecar.bluetoothName)
         assertEquals("ELM327 v1.5", AdapterProfiles.Viecar.banner)

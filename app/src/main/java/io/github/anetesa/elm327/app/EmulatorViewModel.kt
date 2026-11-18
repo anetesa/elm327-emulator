@@ -29,10 +29,12 @@ enum class CarChoice(val title: String, val create: () -> Vehicle) {
     CAN("Petrol car, CAN (ISO 15765-4)", { DemoVehicles.petrol(Bus.CAN) }),
     K_LINE("Petrol car, K-Line (ISO 9141-2)", { DemoVehicles.petrol(Bus.K_LINE) }),
     UDS("OBD on UDS (SAE J1979-2)", { DemoVehicles.petrol(Bus.CAN, ObdStandard.J1979_2) }),
-    AUDI_Q5("Audi Q5 2.0 TFSI, cold start misfires", {
-        BuildConfig.CAR_VIN.takeIf { it.isNotBlank() }?.let(AudiQ5::coldStart) ?: AudiQ5.coldStart()
-    }),
+    AUDI_Q5("Audi Q5 2.0 TFSI, cold start misfires", { AudiQ5.coldStart(carVin()) }),
+    AUDI_Q5_BEFORE("Audi Q5 2.0 TFSI, before the AVS repair", { AudiQ5.coldStart(carVin(), AudiQ5.Misfires.BEFORE_AVS) }),
 }
+
+/** The real VIN from local.properties when there is one. */
+private fun carVin() = BuildConfig.CAR_VIN.ifBlank { "WAUZZZ8R0FA000000" }
 
 data class UiState(
     val profile: AdapterProfile = AdapterProfiles.Genuine,

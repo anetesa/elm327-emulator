@@ -18,7 +18,7 @@ object AudiQ5 {
     /**
      * @param vin the car's VIN; the real one stays out of the repository (local.properties), this one is made up.
      */
-    fun coldStart(vin: String = "WAUZZZ8R0FA000000", seed: Int = 15): Vehicle {
+    fun coldStart(vin: String = "WAUZZZ8R0FA000000", misfires: Misfires = Misfires.AFTER_AVS, seed: Int = 15): Vehicle {
         val rnd = Random(seed)
         fun heating(t: Double) = t < CAT_HEATING_S
         fun rpm(t: Double) = if (heating(t)) 1296.0 + 30 * sin(t) else 760.0 + 15 * sin(t / 2)
@@ -62,7 +62,7 @@ object AudiQ5 {
             permanent = listOf(0x0456, 0x0300, 0x0302),
             // Catalyst, EVAP and oxygen sensor monitors not ready after 34 km and 6 warm-ups
             incompleteMonitors = 0x25,
-            monitorTests = misfireTests(),
+            monitorTests = misfireTests(misfires),
             // P0300 stored 3 s after a cold start: catalyst heating, timing −17.5°, long-term trim +14.8 %
             freezeCode = 0x0300,
             freezePids = mapOf(
@@ -85,18 +85,27 @@ object AudiQ5 {
         )
     }
 
+    /** Misfires of cylinders 1 and 2 in one cold start: counts, seconds until they stop, averages. */
+    enum class Misfires(val cylinder1: Int, val cylinder2: Int, val untilS: Double, val average1: Int, val average2: Int) {
+        /** Before the AVS actuator was replaced: 64 and 327 until the catalyst heating ends at about 40 s (the averages of the scan are kept). */
+        BEFORE_AVS(64, 327, CAT_HEATING_S, 4, 6),
+
+        /** After it: 22 and 23 in the first 7 seconds. */
+        AFTER_AVS(22, 23, 7.0, 4, 6),
+    }
+
     /**
      * Mode 06 misfire counters: cylinders 1 and 2 misfire during the first seconds after the start and
-     * stop (22 and 23 in this cycle; 4 and 6 on average over the last cycles), cylinders 3 and 4 are clean.
+     * stop, cylinders 3 and 4 are clean.
      */
-    private fun misfireTests(): Map<Int, List<MonitorTest>> {
-        fun growing(total: Int): (Double) -> Int = { t -> (total * (t / 7).coerceIn(0.0, 1.0)).roundToInt() }
-        val cylinder1 = growing(22)
-        val cylinder2 = growing(23)
+    private fun misfireTests(m: Misfires): Map<Int, List<MonitorTest>> {
+        fun growing(total: Int): (Double) -> Int = { t -> (total * (t / m.untilS).coerceIn(0.0, 1.0)).roundToInt() }
+        val cylinder1 = growing(m.cylinder1)
+        val cylinder2 = growing(m.cylinder2)
         return mapOf(
-            0xA1 to misfires(current = { t -> cylinder1(t) + cylinder2(t) }, average = { 10 }),
-            0xA2 to misfires(current = cylinder1, average = { 4 }),
-            0xA3 to misfires(current = cylinder2, average = { 6 }),
+            0xA1 to misfires(current = { t -> cylinder1(t) + cylinder2(t) }, average = { m.average1 + m.average2 }),
+            0xA2 to misfires(current = cylinder1, average = { m.average1 }),
+            0xA3 to misfires(current = cylinder2, average = { m.average2 }),
             0xA4 to misfires(current = { 0 }, average = { 0 }),
             0xA5 to misfires(current = { 0 }, average = { 0 }),
         )
