@@ -22,7 +22,7 @@ parser.
   - Wi‑Fi: TCP server on port `35000`; works over the phone's own hotspot.
 - **A faithful ELM327 command interpreter**
   - Echo, linefeeds, spaces and headers (`ATE`, `ATL`, `ATS`, `ATH`), `ATZ`/`ATWS`/`ATD`, `ATI`, `AT@1`,
-    `ATRV`, `ATSP`/`ATTP`, `ATDP`/`ATDPN`, `ATSH`, `ATCRA`/`ATAR`, `ATFCSH`/`ATFCSM`, `ATCP`, STN's `STI`.
+    `ATRV`, `ATSP`/`ATTP`, `ATDP`/`ATDPN`, `ATSH`, `ATCRA`/`ATAR`, `ATFCSH`/`ATFCSM`, `ATCP`, `ATMA`, STN's `STI`.
   - Automatic protocol search (`SEARCHING...`), `UNABLE TO CONNECT` on a wrong manual protocol,
     `NO DATA`, `BUFFER FULL`, `?`.
   - ISO 15765-4 CAN with ISO-TP multi-frame replies (headers off: `014` / `0:` / `1:` lines; headers on:
@@ -41,6 +41,9 @@ parser.
   - Hyundai Kona Electric 64 kWh and Ioniq 5 77 kWh (E-GMP, 192 cells): OBD with fuel type "electric",
     BMS `7E4`/`7EC`, `22 01 01/05` and cell pages.
   - VW ID.4: no OBD, BMS on `17FC007B`/`17FE007B` with state of charge and pack voltage.
+  - Tesla Model 3 Long Range: no OBD; the battery unit broadcasts (`132`, `292`, `332`, `352`, `401`, `3D2`)
+    and is heard in monitor mode (`ATMA` with `ATCRA`, stopped by any character), with the energy message
+    in the 2020 or the newer multiplexed layout.
   - Byte layouts follow the open OVMS project; each pack has one weaker cell.
 - **Adapter profiles**: genuine ELM327 v2.2, clone v1.5, fake v2.1 (single PID, rejected AT commands),
   STN1110, slow BLE (20-byte chunks), tiny buffer, unstable link that drops after 18 commands.

@@ -42,19 +42,49 @@ class Elm327(
     private var connected = false
     private var commands = 0
 
+    /** ATMA is printing the bus; any character from the client stops it (see [ElmSession]). */
+    var monitoring = false
+        private set
+
     /** Runs one command (without the trailing carriage return) and returns the adapter's reply. */
     fun execute(command: String): String {
         commands++
         val limit = profile.dropAfterCommands
         if (limit != null && commands > limit) throw LinkDroppedException("Link dropped after $limit commands")
         val typed = command.trim()
+        // The character that stopped the monitor is not a command: the chip just returns to the prompt
+        if (monitoring) {
+            monitoring = false
+            return "\r>"
+        }
         val echoed = echo
-        val reply = respond(typed.uppercase().replace(" ", ""))
+        val upper = typed.uppercase().replace(" ", "")
+        if (upper == "ATMA" && "ATMA" !in profile.rejectedAt) return monitor(echoed)
+        val reply = respond(upper)
         val lines = reply.render().let { text ->
             if (text.sumOf { it.length } > profile.bufferLimitChars) listOf(BUFFER_FULL) else text
         }
         val eol = if (linefeeds) "\r\n" else "\r"
         return (if (echoed) typed + eol else "") + lines.joinToString(eol) + eol + eol + ">"
+    }
+
+    /**
+     * ATMA: everything on the bus that passes the receive filter (ATCRA), for a few cycles of each message. The
+     * reply has no prompt: a real chip keeps printing until the client sends a character.
+     */
+    private fun monitor(echoed: Boolean): String {
+        val eol = if (linefeeds) "\r\n" else "\r"
+        val t = elapsedSeconds()
+        val heard = vehicle.broadcast.filterKeys { id -> receiveFilter?.equals(id.toString(HEX).uppercase().padStart(3, '0')) ?: true }
+        val frames = (0 until MONITOR_CYCLES).flatMap { cycle ->
+            heard.flatMap { (id, frames) -> frames(t + cycle).map { id to it } }
+        }
+        val lines = frames.map { (id, data) ->
+            val idText = id.toString(HEX).uppercase().padStart(3, '0')
+            if (headers) idText + (if (spaces) " " else "") + hex(data) else hex(data)
+        }
+        monitoring = true
+        return (if (echoed) "ATMA$eol" else "") + lines.joinToString(eol) + eol
     }
 
     private sealed interface Reply {
@@ -394,6 +424,9 @@ class Elm327(
         val EXTENDED_PROTOCOLS = setOf("7", "9")
         const val EXTENDED_HEADER_DIGITS = 6
         const val DEFAULT_PRIORITY = "18"
+
+        /** How many cycles of every message one ATMA prints before the client stops it. */
+        const val MONITOR_CYCLES = 3
         const val OBD_PAIR_OFFSET = 8
 
         /** What the adapter hears on 11-bit CAN without ATCRA: the OBD replies. */

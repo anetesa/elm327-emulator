@@ -12,6 +12,7 @@ import io.github.anetesa.elm327.AudiQ5
 import io.github.anetesa.elm327.Bus
 import io.github.anetesa.elm327.DemoVehicles
 import io.github.anetesa.elm327.ElectricVehicles
+import io.github.anetesa.elm327.TeslaModel3
 import io.github.anetesa.elm327.ElmSession
 import io.github.anetesa.elm327.ObdStandard
 import io.github.anetesa.elm327.SessionEvent
@@ -38,6 +39,8 @@ enum class CarChoice(val title: String, val create: () -> Vehicle) {
     KONA("Hyundai Kona Electric 64 kWh", { ElectricVehicles.konaElectric() }),
     IONIQ_5("Hyundai Ioniq 5 77 kWh (E-GMP, 192 cells)", { ElectricVehicles.ioniq5() }),
     ID4("VW ID.4 (MEB, 29-bit battery unit)", { ElectricVehicles.id4() }),
+    TESLA_MODEL_3("Tesla Model 3 LR (broadcast CAN, new firmware)", { TeslaModel3.longRange() }),
+    TESLA_MODEL_3_2020("Tesla Model 3 LR (broadcast CAN, 2020 firmware)", { TeslaModel3.longRange(TeslaModel3.EnergyLayout.BITS_11) }),
 }
 
 /** The real VIN from local.properties when there is one. */

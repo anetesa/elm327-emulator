@@ -59,6 +59,11 @@ class Vehicle(
     val answersObd: Boolean = true,
     /** The high-voltage battery's management unit of an electric car. */
     val battery: BatteryUnit? = null,
+    /**
+     * Frames the car sends on its own, without being asked (Tesla): by CAN id, one cycle of the message —
+     * a multiplexed message has several frames, one per page. Heard only in monitor mode (ATMA).
+     */
+    val broadcast: Map<Int, (t: Double) -> List<List<Int>>> = emptyMap(),
 ) {
     var stored: List<Int> = stored
         private set

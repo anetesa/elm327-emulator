@@ -33,6 +33,9 @@ class ElmSession(
     private val line = StringBuilder()
     private var last: String? = null
 
+    /** The character that stops the monitor has been passed on; the rest of that line is dropped. */
+    private var stopping = false
+
     private val job: Job = scope.launch {
         for (command in commands) {
             delay(profile.commandDelayMs)
@@ -57,6 +60,14 @@ class ElmSession(
      */
     fun receive(bytes: ByteArray) {
         for (b in bytes) {
+            // While ATMA prints the bus, any character stops it — even a lone carriage return
+            if (elm.monitoring && !stopping) {
+                stopping = true
+                line.clear()
+                commands.trySend(STOP)
+                continue
+            }
+            if (stopping && !elm.monitoring) stopping = false
             when (val c = (b.toInt() and BYTE_MASK).toChar()) {
                 '\r' -> {
                     val command = line.toString().trim().ifEmpty { last }
@@ -79,5 +90,8 @@ class ElmSession(
 
     private companion object {
         const val BYTE_MASK = 0xFF
+
+        /** Stands for the character that stopped the monitor; Elm327 ignores its text. */
+        const val STOP = "\u0000"
     }
 }
