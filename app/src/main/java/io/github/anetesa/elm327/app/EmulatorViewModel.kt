@@ -11,6 +11,7 @@ import io.github.anetesa.elm327.AdapterProfiles
 import io.github.anetesa.elm327.AudiQ5
 import io.github.anetesa.elm327.Bus
 import io.github.anetesa.elm327.DemoVehicles
+import io.github.anetesa.elm327.ElectricVehicles
 import io.github.anetesa.elm327.ElmSession
 import io.github.anetesa.elm327.ObdStandard
 import io.github.anetesa.elm327.SessionEvent
@@ -32,6 +33,11 @@ enum class CarChoice(val title: String, val create: () -> Vehicle) {
     AUDI_Q5("Audi Q5 2.0 TFSI, cold start misfires", { AudiQ5.coldStart(carVin()) }),
     AUDI_Q5_AFTER_CLEAR("Audi Q5 2.0 TFSI, first start after clearing codes", { AudiQ5.coldStart(carVin(), AudiQ5.Misfires.AFTER_CLEAR) }),
     AUDI_Q5_BUSY_UNIT("Audi Q5 2.0 TFSI, engine unit answers \"wait\" first", { AudiQ5.coldStart(carVin(), udsResponsePending = 2) }),
+    LEAF_2016("Nissan Leaf 30 kWh (2016), no OBD, battery unit only", { ElectricVehicles.leaf2016() }),
+    LEAF_2019("Nissan Leaf 40 kWh (2019), SOH from the battery unit", { ElectricVehicles.leaf2019() }),
+    KONA("Hyundai Kona Electric 64 kWh", { ElectricVehicles.konaElectric() }),
+    IONIQ_5("Hyundai Ioniq 5 77 kWh (E-GMP, 192 cells)", { ElectricVehicles.ioniq5() }),
+    ID4("VW ID.4 (MEB, 29-bit battery unit)", { ElectricVehicles.id4() }),
 }
 
 /** The real VIN from local.properties when there is one. */

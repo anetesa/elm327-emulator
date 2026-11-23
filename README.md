@@ -22,7 +22,7 @@ parser.
   - Wi‑Fi: TCP server on port `35000`; works over the phone's own hotspot.
 - **A faithful ELM327 command interpreter**
   - Echo, linefeeds, spaces and headers (`ATE`, `ATL`, `ATS`, `ATH`), `ATZ`/`ATWS`/`ATD`, `ATI`, `AT@1`,
-    `ATRV`, `ATSP`/`ATTP`, `ATDP`/`ATDPN`, STN's `STI`.
+    `ATRV`, `ATSP`/`ATTP`, `ATDP`/`ATDPN`, `ATSH`, `ATCRA`/`ATAR`, `ATFCSH`/`ATFCSM`, `ATCP`, STN's `STI`.
   - Automatic protocol search (`SEARCHING...`), `UNABLE TO CONNECT` on a wrong manual protocol,
     `NO DATA`, `BUFFER FULL`, `?`.
   - ISO 15765-4 CAN with ISO-TP multi-frame replies (headers off: `014` / `0:` / `1:` lines; headers on:
@@ -33,6 +33,15 @@ parser.
     calibration ids and CVN, in-use performance ratios, ECU name).
   - SAE J1979-2 (OBD on UDS): `22 F4xx`, `22 F802`, `19 42`, `19 55`, `14 FFFF33`.
   - Live values change over time: the engine warms up, idles and revs.
+- **Electric cars with a battery management unit** that answers only on its own CAN ids, the way real
+  ones do: the adapter must listen on the reply id (`ATCRA`), send flow control to the unit (`ATFCSH`,
+  `ATFCSM1`) when the ids are not "request + 8", and use 29-bit ids (`ATSP7`, `ATCP`) for VW MEB.
+  - Nissan Leaf 30 kWh (2016) and 40 kWh (2019): no OBD at all, LBC `79B`/`7BB`, groups `21 01/02/04/61`
+    with 96 cells.
+  - Hyundai Kona Electric 64 kWh and Ioniq 5 77 kWh (E-GMP, 192 cells): OBD with fuel type "electric",
+    BMS `7E4`/`7EC`, `22 01 01/05` and cell pages.
+  - VW ID.4: no OBD, BMS on `17FC007B`/`17FE007B` with state of charge and pack voltage.
+  - Byte layouts follow the open OVMS project; each pack has one weaker cell.
 - **Adapter profiles**: genuine ELM327 v2.2, clone v1.5, fake v2.1 (single PID, rejected AT commands),
   STN1110, slow BLE (20-byte chunks), tiny buffer, unstable link that drops after 18 commands.
 - **A live log** of every command and reply on the screen.

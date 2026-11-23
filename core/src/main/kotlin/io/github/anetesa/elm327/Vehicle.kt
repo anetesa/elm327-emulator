@@ -52,6 +52,13 @@ class Vehicle(
     val manufacturerCodes: List<Pair<Int, Int>> = emptyList(),
     /** How many "response pending" (7F 19 78) the engine unit sends before its UDS 19 02 answer. */
     val udsResponsePending: Int = 0,
+    /**
+     * Whether any unit answers the OBD services. Many electric cars (Nissan Leaf, VW ID.4) do not: the
+     * protocol search fails, and only their own units answer manufacturer requests.
+     */
+    val answersObd: Boolean = true,
+    /** The high-voltage battery's management unit of an electric car. */
+    val battery: BatteryUnit? = null,
 ) {
     var stored: List<Int> = stored
         private set
